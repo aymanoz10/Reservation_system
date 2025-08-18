@@ -18,6 +18,7 @@ public function up(): void
         $table->foreignId('hotel_id')->constrained()->onDelete('cascade'); 
         $table->integer('floor'); 
         $table->integer('room_number');
+        $table->string('image');
         $table->string('type'); 
         $table->integer('capacity'); 
         $table->decimal('price_per_night', 8, 2); 
