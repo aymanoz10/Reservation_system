@@ -4,6 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Rating;
 use Illuminate\Http\Request;
+use App\Models\Hotel;
+use App\Models\EventHall;
+use App\Models\Restaurant;
+use App\Models\Tour;
+use App\Models\PlayGround;
 use Illuminate\Support\Facades\Auth;
 
 class RatingController extends Controller
@@ -221,5 +226,128 @@ public function average(Request $request)
         'average_rating' => $average ?? 0,
     ]);
 }
+
+
+public function bestRated(Request $request)
+{
+    $validTypes = ['Hotel', 'EventHall', 'Restaurant', 'PlayGround', 'Tours'];
+    $type = $request->get('type');
+    
+    // Validate type if provided
+    if ($type && !in_array($type, $validTypes)) {
+        return response()->json([
+            'error' => 'Invalid type. Valid types: ' . implode(', ', $validTypes)
+        ], 422);
+    }
+
+    $models = [
+        'Hotel' => Hotel::class,
+        'EventHall' => EventHall::class,
+        'Restaurant' => Restaurant::class,
+        'PlayGround' => PlayGround::class,
+        'Tours' => Tour::class,
+    ];
+
+    $results = collect();
+
+    if ($type) {
+        $results = $this->getTopRated($models[$type]);
+    } else {
+        foreach ($models as $model) {
+            $results = $results->merge($this->getTopRated($model));
+        }
+    }
+
+    return response()->json([
+        'places' => $results->sortByDesc('average_rating')->take(10)->values()
+    ]);
+}
+
+private function getTopRated($model)
+{
+    return $model::query()
+        ->whereHas('ratings')
+        ->withCount('ratings')
+        ->withAvg('ratings', 'rating')
+        ->having('ratings_avg_rating', '>=', 1)
+        ->orderByDesc('ratings_avg_rating')
+        ->orderByDesc('ratings_count')
+        ->limit(10)
+        ->get()
+        ->map(function ($place) use ($model) {
+            $modelName = class_basename($model);
+            $isArabic = app()->getLocale() === 'ar';
+            
+            // Common fields for all models
+            $baseData = [
+                'id' => $place->id,
+                'type' => $modelName,
+                'average_rating' => round($place->ratings_avg_rating, 1),
+                'ratings_count' => $place->ratings_count,
+                'category_id' => $place->category_id,
+            ];
+            
+            // Model-specific field mapping
+            switch ($modelName) {
+                case 'EventHall':
+                    return array_merge($baseData, [
+                        'name' => $isArabic ? $place->ar_title : $place->en_title,
+                        'image' => $place->image,
+                        'location' => $isArabic ? $place->ar_location : $place->en_location,
+                        'capacity' => $place->capicity,
+                        'price' => $place->price,
+                    ]);
+                
+                case 'Hotel':
+                    // Adjust field names based on your Hotel model schema
+                    return array_merge($baseData, [
+                        'name' => $place->name ?? ($isArabic ? $place->ar_name ?? $place->ar_title ?? null : $place->en_name ?? $place->en_title ?? null),
+                        'image' => $place->image ?? $place->image_url ?? null,
+                        'location' => $place->location ?? ($isArabic ? $place->ar_location ?? null : $place->en_location ?? null),
+                        'price' => $place->price ?? null,
+                        'rating' => $place->rating ?? null,
+                    ]);
+                
+                case 'Restaurant':
+                    // Adjust field names based on your Restaurant model schema
+                    return array_merge($baseData, [
+                        'name' => $place->name ?? ($isArabic ? $place->ar_name ?? $place->ar_title ?? null : $place->en_name ?? $place->en_title ?? null),
+                        'image' => $place->image ?? $place->image_url ?? null,
+                        'location' => $place->location ?? ($isArabic ? $place->ar_location ?? null : $place->en_location ?? null),
+                        'cuisine_type' => $place->cuisine_type ?? null,
+                        'price_range' => $place->price_range ?? null,
+                    ]);
+                
+                case 'PlayGround':
+                    // Adjust field names based on your PlayGround model schema
+                    return array_merge($baseData, [
+                        'name' => $place->name ?? ($isArabic ? $place->ar_name ?? $place->ar_title ?? null : $place->en_name ?? $place->en_title ?? null),
+                        'image' => $place->image ?? $place->image_url ?? null,
+                        'location' => $place->location ?? ($isArabic ? $place->ar_location ?? null : $place->en_location ?? null),
+                        'age_range' => $place->age_range ?? null,
+                        'price' => $place->price ?? null,
+                    ]);
+                
+                case 'Tour':
+                    // Adjust field names based on your Tour model schema
+                    return array_merge($baseData, [
+                        'name' => $place->name ?? ($isArabic ? $place->ar_name ?? $place->ar_title ?? null : $place->en_name ?? $place->en_title ?? null),
+                        'image' => $place->image ?? $place->image_url ?? null,
+                        'location' => $place->location ?? ($isArabic ? $place->ar_location ?? null : $place->en_location ?? null),
+                        'duration' => $place->duration ?? null,
+                        'price' => $place->price ?? null,
+                        'max_people' => $place->max_people ?? null,
+                    ]);
+                
+                default:
+                    return array_merge($baseData, [
+                        'name' => $place->name ?? null,
+                        'image' => $place->image ?? $place->image_url ?? null,
+                        'location' => $place->location ?? null,
+                    ]);
+            }
+        });
+}
+
 
 }

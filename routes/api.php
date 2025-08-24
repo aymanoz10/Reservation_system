@@ -135,6 +135,7 @@ Route::prefix('rating')->group(function () {
     Route::post('/rate', [RatingController::class, 'rate']);
     Route::post('/edit', [RatingController::class, 'edit']);
     Route::get('/delete', [RatingController::class, 'delete']);
+    Route::get('/bestRated', [RatingController::class, 'bestRated']);
     Route::get('/rates', [RatingController::class, 'rates']);
     Route::get('/average', [RatingController::class, 'average']);
 
