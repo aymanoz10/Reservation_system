@@ -14,28 +14,67 @@ class PlayGroundController extends Controller
     /**
      * عرض جميع الملاعب المتاحة
      */
-    public function index(Request $request)
-    {
-        $playgrounds = PlayGround::with('category')
-            ->when($request->filled('sport'), function ($query) use ($request) {
-                $query->where('sport', $request->sport);
-            })
-            ->when($request->filled('search'), function ($query) use ($request) {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('ar_title', 'LIKE', "%{$search}%")
-                        ->orWhere('en_title', 'LIKE', "%{$search}%")
-                        ->orWhere('location', 'LIKE', "%{$search}%");
-                });
-            })
-            ->get();
+   public function index(Request $request) 
+{
+    // ✅ إذا بعت id → رجّع ملعب واحد فقط
+    if ($request->has('id')) {
+        $playground = PlayGround::with('category')->find($request->id);
 
-        if ($playgrounds->isEmpty()) {
-            return response()->json(['error' => 'No playgrounds found'], 404);
+        if (!$playground) {
+            return response()->json(['error' => 'Playground not found'], 404);
         }
 
-        return response()->json($playgrounds);
+        return response()->json([
+            'id' => $playground->id,
+            'category_id' => $playground->category_id,
+            'category_name' => optional($playground->category)->en_title,
+            'sport' => $playground->sport,
+            'ar_title' => $playground->ar_title,
+            'en_title' => $playground->en_title,
+            'location' => $playground->location,
+            'image' => $playground->image ? asset('storage/' . $playground->image) : null,
+            'created_at' => $playground->created_at->format('Y-m-d H:i'),
+            'updated_at' => $playground->updated_at->format('Y-m-d H:i'),
+        ]);
     }
+
+    // ✅ إذا ما بعت id → رجّع قائمة بالملاعب مع الفلاتر
+    $playgrounds = PlayGround::with('category')
+        ->when($request->filled('sport'), function ($query) use ($request) {
+            $query->where('sport', $request->sport);
+        })
+        ->when($request->filled('search'), function ($query) use ($request) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('ar_title', 'LIKE', "%{$search}%")
+                  ->orWhere('en_title', 'LIKE', "%{$search}%")
+                  ->orWhere('location', 'LIKE', "%{$search}%");
+            });
+        })
+        ->get();
+
+    if ($playgrounds->isEmpty()) {
+        return response()->json(['error' => 'No playgrounds found'], 404);
+    }
+
+    $data = $playgrounds->map(function ($playground) {
+        return [
+            'id' => $playground->id,
+            'category_id' => $playground->category_id,
+            'category_name' => optional($playground->category)->en_title,
+            'sport' => $playground->sport,
+            'ar_title' => $playground->ar_title,
+            'en_title' => $playground->en_title,
+            'location' => $playground->location,
+            'image' => $playground->image ? asset('storage/' . $playground->image) : null,
+            'created_at' => $playground->created_at->format('Y-m-d H:i'),
+            'updated_at' => $playground->updated_at->format('Y-m-d H:i'),
+        ];
+    });
+
+    return response()->json($data);
+}
+
 
     /**
      * إنشاء حجز جديد للملعب

@@ -12,26 +12,65 @@ use Carbon\Carbon;
 
 class EventHallController extends Controller
 {
-    public function index(Request $request)
-    {
-        $eventHalls = EventHall::with('category')
-            ->when($request->filled('search'), function ($query) use ($request) {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('ar_title', 'LIKE', "%{$search}%")
-                      ->orWhere('en_title', 'LIKE', "%{$search}%")
-                      ->orWhere('ar_location', 'LIKE', "%{$search}%")
-                      ->orWhere('en_location', 'LIKE', "%{$search}%");
-                });
-            })
-            ->get();
+    public function index(Request $request) 
+{
+    // إذا في id → رجّع القاعة المطلوبة فقط
+    if ($request->has('id')) {
+        $eventHall = EventHall::with('category')->find($request->id);
 
-        if ($eventHalls->isEmpty()) {
-            return response()->json(['error' => 'No event halls found'], 404);
+        if (!$eventHall) {
+            return response()->json(['error' => 'Event hall not found'], 404);
         }
 
-        return response()->json($eventHalls);
+        return response()->json([
+            'id' => $eventHall->id,
+            'category_id' => $eventHall->category_id,
+            'category_name' => optional($eventHall->category)->en_title,
+            'ar_title' => $eventHall->ar_title,
+            'en_title' => $eventHall->en_title,
+            'image' => $eventHall->image ? asset('storage/' . $eventHall->image) : null,
+            'ar_location' => $eventHall->ar_location,
+            'en_location' => $eventHall->en_location,
+            'created_at' => $eventHall->created_at->format('Y-m-d H:i'),
+            'updated_at' => $eventHall->updated_at->format('Y-m-d H:i'),
+        ]);
     }
+
+    // إذا ما في id → رجّع كل القاعات مع البحث
+    $eventHalls = EventHall::with('category')
+        ->when($request->filled('search'), function ($query) use ($request) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('ar_title', 'LIKE', "%{$search}%")
+                  ->orWhere('en_title', 'LIKE', "%{$search}%")
+                  ->orWhere('ar_location', 'LIKE', "%{$search}%")
+                  ->orWhere('en_location', 'LIKE', "%{$search}%");
+            });
+        })
+        ->get();
+
+    if ($eventHalls->isEmpty()) {
+        return response()->json(['error' => 'No event halls found'], 404);
+    }
+
+    // رجّع القائمة كلها
+    $data = $eventHalls->map(function ($eventHall) {
+        return [
+            'id' => $eventHall->id,
+            'category_id' => $eventHall->category_id,
+            'category_name' => optional($eventHall->category)->en_title,
+            'ar_title' => $eventHall->ar_title,
+            'en_title' => $eventHall->en_title,
+            'image' => $eventHall->image ? asset('storage/' . $eventHall->image) : null,
+            'ar_location' => $eventHall->ar_location,
+            'en_location' => $eventHall->en_location,
+            'created_at' => $eventHall->created_at->format('Y-m-d H:i'),
+            'updated_at' => $eventHall->updated_at->format('Y-m-d H:i'),
+        ];
+    });
+
+    return response()->json($data);
+}
 
  
 public function reserve(Request $request)

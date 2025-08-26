@@ -16,6 +16,29 @@ class HotelController extends Controller
 
 public function index(Request $request)
 {
+    // إذا انبعت id → رجّع فندق واحد فقط
+    if ($request->has('id')) {
+        $hotel = Hotel::with('category')->find($request->id);
+
+        if (!$hotel) {
+            return response()->json(['error' => 'Hotel not found'], 404);
+        }
+
+        return response()->json([
+            'id' => $hotel->id,
+            'category_id' => $hotel->category_id,
+            'category_name' => optional($hotel->category)->en_title,
+            'ar_title' => $hotel->ar_title,
+            'en_title' => $hotel->en_title,
+            'image' => $hotel->image ? asset('storage/' . $hotel->image) : null,
+            'ar_location' => $hotel->ar_location,
+            'en_location' => $hotel->en_location,
+            'created_at' => $hotel->created_at->format('Y-m-d H:i'),
+            'updated_at' => $hotel->updated_at->format('Y-m-d H:i'),
+        ]);
+    }
+
+    // غير هيك → رجّع القائمة كاملة مع إمكانية البحث
     $hotels = Hotel::with('category')
         ->when($request->search, function ($query) use ($request) {
             $query->where('ar_title', 'LIKE', '%' . $request->search . '%')

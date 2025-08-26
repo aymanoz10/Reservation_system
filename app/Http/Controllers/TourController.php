@@ -17,32 +17,60 @@ class TourController extends Controller
 {
 
 
-    public function index(Request $request)
-    {
-        $tours = Tour::when($request->search, function ($query) use ($request) {
-            $query->where('ar_title', 'LIKE', '%' . $request->search . '%')
-                  ->orWhere('en_title', 'LIKE', '%' . $request->search . '%');
-        })->get();
+   public function index(Request $request) 
+{
+    // ✅ إذا في id نرجّع تور واحد
+    if ($request->filled('id')) {
+        $tour = Tour::find($request->id);
 
-        $result = $tours->map(function ($tour) {
-            return [
-                'id' => $tour->id,
-                'category_id' => $tour->category_id,
-                'ar_title' => $tour->ar_title,
-                'en_title' => $tour->en_title,
-                'ar_description' => $tour->ar_description,
-                'en_description' => $tour->en_description,
-                'image' => $tour->image ? asset(Storage::url($tour->image)) : null,
-                'price' => number_format($tour->price, 2),
-                'start_date' => $tour->start_date->format('Y-m-d'),
-                'end_date' => $tour->end_date->format('Y-m-d'),
-                'created_at' => $tour->created_at->format('Y-m-d H:i'),
-                'updated_at' => $tour->updated_at->format('Y-m-d H:i'),
-            ];
-        });
+        if (!$tour) {
+            return response()->json(['error' => 'Tour not found'], 404);
+        }
+
+        $result = [
+            'id' => $tour->id,
+            'category_id' => $tour->category_id,
+            'ar_title' => $tour->ar_title,
+            'en_title' => $tour->en_title,
+            'ar_description' => $tour->ar_description,
+            'en_description' => $tour->en_description,
+            'image' => $tour->image ? asset(Storage::url($tour->image)) : null,
+            'price' => number_format($tour->price, 2),
+            'start_date' => $tour->start_date->format('Y-m-d'),
+            'end_date' => $tour->end_date->format('Y-m-d'),
+            'created_at' => $tour->created_at->format('Y-m-d H:i'),
+            'updated_at' => $tour->updated_at->format('Y-m-d H:i'),
+        ];
 
         return response()->json($result);
     }
+
+    // ✅ إذا ما في id نرجّع الكل مع خيار البحث
+    $tours = Tour::when($request->search, function ($query) use ($request) {
+        $query->where('ar_title', 'LIKE', '%' . $request->search . '%')
+              ->orWhere('en_title', 'LIKE', '%' . $request->search . '%');
+    })->get();
+
+    $result = $tours->map(function ($tour) {
+        return [
+            'id' => $tour->id,
+            'category_id' => $tour->category_id,
+            'ar_title' => $tour->ar_title,
+            'en_title' => $tour->en_title,
+            'ar_description' => $tour->ar_description,
+            'en_description' => $tour->en_description,
+            'image' => $tour->image ? asset(Storage::url($tour->image)) : null,
+            'price' => number_format($tour->price, 2),
+            'start_date' => $tour->start_date->format('Y-m-d'),
+            'end_date' => $tour->end_date->format('Y-m-d'),
+            'created_at' => $tour->created_at->format('Y-m-d H:i'),
+            'updated_at' => $tour->updated_at->format('Y-m-d H:i'),
+        ];
+    });
+
+    return response()->json($result);
+}
+
 
 
 

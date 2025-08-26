@@ -11,17 +11,28 @@ use Illuminate\Support\Facades\Auth;
 
 class RestaurantController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request) 
 {
-    $query = Restaurant::query();
+    // ✅ إذا بعت id → رجّع مطعم واحد فقط
+    if ($request->has('id')) {
+        $restaurant = Restaurant::with('category')->find($request->id);
 
-    // Apply search if provided
-    if ($request->has('search') && !empty($request->search)) {
+        if (!$restaurant) {
+            return response()->json(['error' => 'Restaurant not found'], 404);
+        }
+
+        return new RestaurantResource($restaurant);
+    }
+
+    // ✅ إذا ما في id → رجّع قائمة بالمطاعم مع البحث
+    $query = Restaurant::with('category');
+
+    if ($request->filled('search')) {
         $searchTerm = $request->search;
         $query->where(function ($q) use ($searchTerm) {
-            $q->where('ar_title', 'LIKE', '%' . $searchTerm . '%')
-              ->orWhere('en_title', 'LIKE', '%' . $searchTerm . '%')
-              ->orWhere('location', 'LIKE', '%' . $searchTerm . '%');
+            $q->where('ar_title', 'LIKE', "%{$searchTerm}%")
+              ->orWhere('en_title', 'LIKE', "%{$searchTerm}%")
+              ->orWhere('location', 'LIKE', "%{$searchTerm}%");
         });
     }
 
@@ -33,6 +44,7 @@ class RestaurantController extends Controller
 
     return RestaurantResource::collection($restaurants);
 }
+
 
 
 public function reserve(Request $request)

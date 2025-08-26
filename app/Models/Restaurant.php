@@ -25,6 +25,10 @@ class Restaurant extends Model
 {
     return $this->morphMany(Rating::class, 'rateable');
 }
+  public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
 
 
 public function reservations()
