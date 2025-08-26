@@ -33,6 +33,9 @@ public function index(Request $request)
             'image' => $hotel->image ? asset('storage/' . $hotel->image) : null,
             'ar_location' => $hotel->ar_location,
             'en_location' => $hotel->en_location,
+            'is_closed' => $hotel->is_closed,
+            'closed_from' => $hotel->closed_from,
+            'closed_until' => $hotel->closed_until,
             'created_at' => $hotel->created_at->format('Y-m-d H:i'),
             'updated_at' => $hotel->updated_at->format('Y-m-d H:i'),
         ]);
@@ -59,6 +62,9 @@ public function index(Request $request)
             'image' => $hotel->image ? asset('storage/' . $hotel->image) : null,
             'ar_location' => $hotel->ar_location,
             'en_location' => $hotel->en_location,
+            'is_closed' => $hotel->is_closed,
+            'closed_from' => $hotel->closed_from,
+            'closed_until' => $hotel->closed_until,
             'created_at' => $hotel->created_at->format('Y-m-d H:i'),
             'updated_at' => $hotel->updated_at->format('Y-m-d H:i'),
         ];
@@ -66,6 +72,7 @@ public function index(Request $request)
 
     return response()->json($data);
 }
+
 
 
 public function rooms(Request $request)
