@@ -33,6 +33,9 @@ class PlayGroundController extends Controller
             'en_title' => $playground->en_title,
             'location' => $playground->location,
             'image' => $playground->image ? asset('storage/' . $playground->image) : null,
+            'is_closed' => $playground->is_closed,
+            'closed_from' => $playground->closed_from,
+            'closed_until' => $playground->closed_until,
             'created_at' => $playground->created_at->format('Y-m-d H:i'),
             'updated_at' => $playground->updated_at->format('Y-m-d H:i'),
         ]);
@@ -67,6 +70,9 @@ class PlayGroundController extends Controller
             'en_title' => $playground->en_title,
             'location' => $playground->location,
             'image' => $playground->image ? asset('storage/' . $playground->image) : null,
+            'is_closed' => $playground->is_closed,
+            'closed_from' => $playground->closed_from,
+            'closed_until' => $playground->closed_until,
             'created_at' => $playground->created_at->format('Y-m-d H:i'),
             'updated_at' => $playground->updated_at->format('Y-m-d H:i'),
         ];
