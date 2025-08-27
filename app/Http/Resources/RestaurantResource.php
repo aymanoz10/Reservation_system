@@ -18,6 +18,9 @@ class RestaurantResource extends JsonResource
             'en_title' => $this->en_title,
             'location' => $this->location,
             'image' => $imageUrl,
+            'is_closed' => $this->is_closed,
+            'closed_from' => $this->closed_from,
+            'closed_until' => $this->closed_until,
             'created_at' => $this->created_at->format('Y-m-d H:i'),
             'updated_at' => $this->updated_at->format('Y-m-d H:i'),
         ];
