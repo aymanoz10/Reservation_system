@@ -9,6 +9,7 @@ use App\Models\EventHall;
 use App\Models\Restaurant;
 use App\Models\Tour;
 use App\Models\PlayGround;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class RatingController extends Controller
@@ -108,8 +109,15 @@ public function edit(Request $request)
     $rating->comment = $request->comment;
     $rating->save();
 
-    return response()->json(['message' => 'Rating updated successfully.', 'rating' => $rating]);
-
+    // Return response with user name and user id at the beginning
+    return response()->json([
+        'user' => [
+            'id' => $user->id,
+            'name' => $user->name, // Assuming the user model has a 'name' attribute
+        ],
+        'message' => 'Rating updated successfully.',
+        'rating' => $rating
+    ]);
 }
 
 public function delete(Request $request)
@@ -181,7 +189,23 @@ public function rates(Request $request)
 
     $averageRating = round($ratings->avg('rating'), 2);
     $ratingsCount  = $ratings->count();
-    $latestComments = $ratings->latest()->take(5)->get(['rating', 'comment', 'created_at']);
+    $latestComments = $ratings->with('user:id,username') // Eager load user relation to get id and name
+        ->latest()
+        ->take(5)
+        ->get(['rating', 'comment', 'created_at', 'user_id']); // Include user_id to relate to user
+
+    // Transform the latestComments to include user name and id
+    $latestComments->transform(function ($rating) {
+        return [
+            'user_id' => $rating->user->id,
+            'user_name' => $rating->user->username,
+            'rating' => $rating->rating,
+            'comment' => $rating->comment,
+            'created_at' => $rating->created_at,
+            
+            
+        ];
+    });
 
     return response()->json([
         'average_rating' => $averageRating ?? 0,
