@@ -169,17 +169,20 @@ public function createRoom(Request $request)
         'hotel_id'        => 'required|exists:hotels,id',
         'floor'           => 'required|integer|min:0',
         'room_number'     => 'required|integer|min:1',
+        'image'           => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         'type'            => 'required|string|max:255',
         'capacity'        => 'required|integer|min:1',
         'price_per_night' => 'required|numeric|min:0',
         'description'     => 'nullable|string',
     ]);
+         $path = $request->file('image')->store('hotlerooms', 'public');
 
     // 🏨 Create room
     $room = HotelRoom::create([
         'hotel_id'        => $request->hotel_id,
         'floor'           => $request->floor,
         'room_number'     => $request->room_number,
+        'image'           => $path,
         'type'            => $request->type,
         'capacity'        => $request->capacity,
         'price_per_night' => $request->price_per_night,

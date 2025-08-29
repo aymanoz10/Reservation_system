@@ -14,6 +14,7 @@ class HotelRoom extends Model
     'floor',
     'room_number',
     'type',
+    'image',
     'capacity',
     'price_per_night',
     'description',
